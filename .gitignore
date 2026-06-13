@@ -1,0 +1,35 @@
+cat > .gitignore << 'EOF'
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+*.pkl
+*.joblib
+
+# Node
+node_modules/
+dist/
+.next/
+
+# Environment
+.env
+*.env.local
+
+# Docker
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# ML
+ml/data/*.csv
+ml/models/*.pkl
+EOF
