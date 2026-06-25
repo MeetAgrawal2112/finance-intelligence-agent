@@ -1,55 +1,65 @@
-# app/core/security.py
+# app/core/security.py — poora file replace karo
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt
 from app.core.config import settings
+from enum import Enum
 
-# bcrypt algorithm use karega password hash karne ke liye
-# bcrypt isliye kyunki yeh intentionally slow hai
-# Matlab brute force attack karna bahut mushkil ho jaata hai
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
+class TokenType(str, Enum):
+    ACCESS = "access"
+    REFRESH = "refresh"
+
 def hash_password(password: str) -> str:
-    """
-    Plain text password ko hash mein convert karo.
-    Example: "mypassword123" → "$2b$12$xyz..."
-    Yeh one-way process hai — hash se password
-    wapas nahi nikaal sakte.
-    """
+    """Plain text → bcrypt hash."""
     return pwd_context.hash(password)
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """
-    Login ke time — user ne jo password diya
-    usse stored hash se compare karo.
-    """
+    """Login ke time password verify karo."""
     return pwd_context.verify(plain_password, hashed_password)
 
 def create_access_token(data: dict) -> str:
     """
-    JWT token banao.
-    data mein user_id hoga: {"sub": "user-uuid-here"}
-    Token expire hoga settings mein set time ke baad.
+    Short-lived access token banao — 30 minutes.
+    Har protected API call mein yeh bheja jaata hai.
     """
     to_encode = data.copy()
-
     expire = datetime.now(timezone.utc) + timedelta(
         minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
     )
-    to_encode.update({"exp": expire})
-
-    # JWT encode karo secret key se
-    token = jwt.encode(
+    to_encode.update({
+        "exp": expire,
+        "type": TokenType.ACCESS
+    })
+    return jwt.encode(
         to_encode,
         settings.SECRET_KEY,
         algorithm=settings.ALGORITHM
     )
-    return token
 
-def decode_access_token(token: str) -> dict | None:
+def create_refresh_token(data: dict) -> str:
     """
-    Token verify karo aur data nikalo.
-    Agar token invalid ya expired hai toh None return karo.
+    Long-lived refresh token banao — 7 days.
+    Sirf naya access token lene ke liye use hota hai.
+    Isko securely store karo — localStorage nahi, httpOnly cookie better hai.
+    """
+    to_encode = data.copy()
+    expire = datetime.now(timezone.utc) + timedelta(days=7)
+    to_encode.update({
+        "exp": expire,
+        "type": TokenType.REFRESH
+    })
+    return jwt.encode(
+        to_encode,
+        settings.SECRET_KEY,
+        algorithm=settings.ALGORITHM
+    )
+
+def decode_token(token: str) -> dict | None:
+    """
+    Token decode karo aur payload return karo.
+    Agar invalid/expired hai toh None return karo.
     """
     try:
         payload = jwt.decode(
@@ -60,3 +70,10 @@ def decode_access_token(token: str) -> dict | None:
         return payload
     except JWTError:
         return None
+
+def verify_token_type(payload: dict, expected_type: TokenType) -> bool:
+    """
+    Token ka type check karo.
+    Refresh token se direct API access block karo.
+    """
+    return payload.get("type") == expected_type

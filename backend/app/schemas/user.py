@@ -1,30 +1,20 @@
-# app/schemas/user.py
+# app/schemas/user.py — poora file replace karo
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
 from uuid import UUID
 from datetime import datetime
 
 class UserCreate(BaseModel):
-    """
-    Registration ke time frontend se yeh data aayega.
-    EmailStr automatically email format validate karta hai.
-    """
     email: EmailStr
     full_name: str = Field(..., min_length=2, max_length=255)
     password: str = Field(..., min_length=8, max_length=100)
     currency: str = Field(default="INR", max_length=10)
 
 class UserLogin(BaseModel):
-    """Login ke time yeh data aayega."""
     email: EmailStr
     password: str
 
 class UserResponse(BaseModel):
-    """
-    API response mein user data — password kabhi nahi bhejenge!
-    orm_mode=True matlab SQLAlchemy model directly
-    is schema mein convert ho sakta hai.
-    """
     id: UUID
     email: str
     full_name: str
@@ -36,12 +26,26 @@ class UserResponse(BaseModel):
     model_config = {"from_attributes": True}
 
 class TokenResponse(BaseModel):
-    """Login success ke baad yeh return hoga."""
+    """
+    Login success ke baad yeh return hoga.
+    access_token = short lived (30 min) — API calls ke liye
+    refresh_token = long lived (7 days) — naya access token lene ke liye
+    """
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
+    expires_in: int  # seconds mein
     user: UserResponse
 
+class RefreshTokenRequest(BaseModel):
+    """Refresh token se naya access token lene ke liye."""
+    refresh_token: str
+
 class UserUpdate(BaseModel):
-    """Profile update ke liye — sab fields optional hain."""
     full_name: Optional[str] = Field(None, min_length=2, max_length=255)
     currency: Optional[str] = Field(None, max_length=10)
+
+class PasswordChange(BaseModel):
+    """Password change karne ke liye."""
+    current_password: str
+    new_password: str = Field(..., min_length=8, max_length=100)
