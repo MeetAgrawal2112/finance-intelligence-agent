@@ -1,4 +1,3 @@
-cat > README.md << 'EOF'
 # Finance Intelligence Agent
 
 AI-powered personal finance manager with natural language queries,
@@ -45,10 +44,4 @@ expense categorisation, spending prediction, and anomaly detection.
    backend/     FastAPI + ML services
    ml/          Model training notebooks
    docker/      Dockerfiles
-
-## Day-wise Progress
-- [x] Day 1: Project setup & environment
-- [ ] Day 2: PostgreSQL schema design
-- [ ] Day 3: FastAPI project structure
-   ...
 EOF
