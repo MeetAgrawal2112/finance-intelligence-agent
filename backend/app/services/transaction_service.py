@@ -17,6 +17,9 @@ from typing import List, Tuple
 from app.services.categoriser_service import categoriser
 from app.models.category import Category
 
+from app.services.anomaly_service import anomaly_detector
+from app.models.alert import Alert, AlertType, AlertSeverity
+import uuid as uuid_lib
 
 class TransactionService:
 
@@ -26,9 +29,9 @@ class TransactionService:
         user: User,
         data: TransactionCreate
     ) -> Transaction:
-        """Naya transaction — auto categorise karo."""
+        """Naya transaction — auto categorise + anomaly check."""
 
-        # Auto categorise karo agar category manually nahi di
+        # 1. Auto categorise
         category_id = data.category_id
         ml_confidence = 0.0
 
@@ -37,7 +40,6 @@ class TransactionService:
             prediction = categoriser.predict(text)
             ml_confidence = prediction["confidence"]
 
-            # DB mein us category ka naam dhundho
             category = db.query(Category).filter(
                 Category.name == prediction["category"],
                 Category.is_system == True
@@ -46,8 +48,9 @@ class TransactionService:
             if category:
                 category_id = category.id
 
+        # 2. Transaction banao
         transaction = Transaction(
-            id=uuid.uuid4(),
+            id=uuid_lib.uuid4(),
             user_id=user.id,
             amount=data.amount,
             currency=data.currency,
@@ -56,12 +59,61 @@ class TransactionService:
             merchant_name=data.merchant_name,
             transaction_date=data.transaction_date,
             account_id=data.account_id,
-            category_id=category_id,        # ← ML predicted category
-            ml_category_confidence=ml_confidence,  # ← Confidence score
+            category_id=category_id,
+            ml_category_confidence=ml_confidence,
             is_manually_categorized=bool(data.category_id),
             notes=data.notes,
             status="completed"
         )
+
+        # 3. Anomaly check (sirf debit transactions pe)
+        from app.models.transaction import TransactionType as TType
+        if data.transaction_type == TType.DEBIT:
+            category_name = "Other"
+            if category_id:
+                cat = db.query(Category).filter(
+                    Category.id == category_id
+                ).first()
+                if cat:
+                    category_name = cat.name
+
+            anomaly_result = anomaly_detector.analyze_transaction(
+                amount=data.amount,
+                description=data.description,
+                transaction_date=data.transaction_date,
+                user_id=str(user.id),
+                category=category_name
+            )
+
+            transaction.is_anomaly = anomaly_result["is_anomaly"]
+            transaction.anomaly_score = anomaly_result["anomaly_score"]
+
+            # 4. Alert create karo agar anomaly hai
+            if anomaly_result["is_anomaly"]:
+                severity_map = {
+                    "high": AlertSeverity.HIGH,
+                    "medium": AlertSeverity.MEDIUM,
+                    "low": AlertSeverity.LOW,
+                }
+                reasons_text = ", ".join(anomaly_result["reasons"])
+
+                alert = Alert(
+                    id=uuid_lib.uuid4(),
+                    user_id=user.id,
+                    alert_type=AlertType.ANOMALY,
+                    severity=severity_map[anomaly_result["severity"]],
+                    title=f"Unusual transaction detected: ₹{data.amount:,.0f}",
+                    message=(
+                        f"Transaction '{data.description}' "
+                        f"of ₹{data.amount:,.0f} flagged.\n"
+                        f"Reasons: {reasons_text}\n"
+                        f"Anomaly score: {anomaly_result['anomaly_score']:.0%}"
+                    ),
+                    is_read=False,
+                    is_resolved=False,
+                )
+                db.add(alert)
+
         db.add(transaction)
         db.commit()
         db.refresh(transaction)

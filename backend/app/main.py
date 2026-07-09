@@ -5,28 +5,19 @@ from contextlib import asynccontextmanager
 from app.core.config import settings
 from app.api.routes import health, auth, transactions
 from app.services.categoriser_service import categoriser
-
-
+from app.services.anomaly_service import anomaly_detector
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """
-    App startup aur shutdown events.
-    Startup: ML models load karo
-    Shutdown: Resources cleanup
-    """
-    # ── STARTUP ──
     print("\n🚀 Starting Finance Intelligence Agent...")
     print(f"   Environment: {settings.ENVIRONMENT}")
 
-    # ML model load karo
     print("\n📦 Loading ML models...")
     categoriser.load_model()
+    anomaly_detector.load_model()   # ← ADD
 
     print("\n✅ App ready!\n")
     yield
-
-    # ── SHUTDOWN ──
     print("\n👋 Shutting down...")
 
 app = FastAPI(

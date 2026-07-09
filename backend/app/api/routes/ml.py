@@ -6,7 +6,9 @@ from app.services.categoriser_service import categoriser
 from app.schemas.common import SuccessResponse
 from pydantic import BaseModel
 from typing import List
-
+from app.services.anomaly_service import anomaly_detector
+from datetime import datetime, timezone
+from app.db.session import get_db
 router = APIRouter()
 
 class CategoriseRequest(BaseModel):
@@ -49,4 +51,65 @@ def get_model_info(current_user: User = Depends(get_current_user)):
     """ML model ka status aur info."""
     return SuccessResponse(
         data=categoriser.model_info
+    )
+
+
+class AnomalyCheckRequest(BaseModel):
+    amount: float
+    description: str
+    transaction_date: str = None
+
+@router.post("/anomaly-check")
+def check_anomaly(
+    request: AnomalyCheckRequest,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Transaction anomaly check karo add karne se pehle.
+    Frontend preview ke liye use kar sakta hai.
+    """
+    t_date = datetime.now(timezone.utc)
+    if request.transaction_date:
+        try:
+            t_date = datetime.fromisoformat(request.transaction_date)
+        except:
+            pass
+
+    result = anomaly_detector.analyze_transaction(
+        amount=request.amount,
+        description=request.description,
+        transaction_date=t_date,
+        user_id=str(current_user.id),
+    )
+
+    return SuccessResponse(
+        message="Anomaly check complete",
+        data=result
+    )
+
+@router.get("/anomaly-stats")
+def get_anomaly_stats(
+    db = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """User ke anomaly statistics."""
+    from app.models.transaction import Transaction
+    from app.models.alert import Alert
+
+    total = db.query(Transaction).filter(
+        Transaction.user_id == current_user.id,
+        Transaction.is_anomaly == True
+    ).count()
+
+    unread_alerts = db.query(Alert).filter(
+        Alert.user_id == current_user.id,
+        Alert.is_read == False
+    ).count()
+
+    return SuccessResponse(
+        data={
+            "total_anomalies": total,
+            "unread_alerts": unread_alerts,
+            "detector_loaded": anomaly_detector.is_loaded
+        }
     )
