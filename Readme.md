@@ -24,7 +24,6 @@ expense categorisation, spending prediction, and anomaly detection.
 
 2. Setup environment
    cp .env.example .env
-   # .env mein apni API keys daalo
 
 3. Start infrastructure
    docker compose up -d
