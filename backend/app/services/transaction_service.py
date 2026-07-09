@@ -14,6 +14,9 @@ import csv
 import io
 from datetime import datetime, timezone
 from typing import List, Tuple
+from app.services.categoriser_service import categoriser
+from app.models.category import Category
+
 
 class TransactionService:
 
@@ -23,11 +26,26 @@ class TransactionService:
         user: User,
         data: TransactionCreate
     ) -> Transaction:
-        """
-        Naya transaction create karo.
-        Future mein yahan ML categorisation
-        automatically trigger hogi (Day 9).
-        """
+        """Naya transaction — auto categorise karo."""
+
+        # Auto categorise karo agar category manually nahi di
+        category_id = data.category_id
+        ml_confidence = 0.0
+
+        if not category_id:
+            text = f"{data.merchant_name or ''} {data.description}".strip()
+            prediction = categoriser.predict(text)
+            ml_confidence = prediction["confidence"]
+
+            # DB mein us category ka naam dhundho
+            category = db.query(Category).filter(
+                Category.name == prediction["category"],
+                Category.is_system == True
+            ).first()
+
+            if category:
+                category_id = category.id
+
         transaction = Transaction(
             id=uuid.uuid4(),
             user_id=user.id,
@@ -38,7 +56,9 @@ class TransactionService:
             merchant_name=data.merchant_name,
             transaction_date=data.transaction_date,
             account_id=data.account_id,
-            category_id=data.category_id,
+            category_id=category_id,        # ← ML predicted category
+            ml_category_confidence=ml_confidence,  # ← Confidence score
+            is_manually_categorized=bool(data.category_id),
             notes=data.notes,
             status="completed"
         )
