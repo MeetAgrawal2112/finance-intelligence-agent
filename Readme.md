@@ -16,27 +16,6 @@ expense categorisation, spending prediction, and anomaly detection.
 - Python 3.11+
 - Node.js 20+
 
-### Run Locally
-
-1. Clone the repo
-   git clone https://github.com/YOUR_USERNAME/finance-intelligence-agent.git
-   cd finance-intelligence-agent
-
-2. Setup environment
-   cp .env.example .env
-
-3. Start infrastructure
-   docker compose up -d
-
-4. Start backend (Day 3 ke baad)
-   cd backend
-   source .venv/bin/activate
-   uvicorn app.main:app --reload
-
-5. Start frontend (Day 6 ke baad)
-   cd frontend
-   npm install
-   npm run dev
 
 ## Project Structure
    frontend/    React SPA
