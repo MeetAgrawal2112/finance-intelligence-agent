@@ -2,7 +2,7 @@
 import { apiClient } from './client'
 import type {
   ApiResponse, Transaction, MonthlySummary,
-  CategoryAnalytics, TransactionFilters
+  TransactionFilters
 } from '../types'
 
 export const transactionsApi = {
