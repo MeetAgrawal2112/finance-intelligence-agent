@@ -11,18 +11,13 @@ router = APIRouter()
 
 @router.get("/health")
 def health_check(db: Session = Depends(get_db)):
-    """
-    App ka health check — kya sab systems chal rahe hain?
-    Production mein load balancer yeh endpoint check karta hai.
-    Agar 200 aaye → app alive
-    Agar 500 aaye → app dead → restart karo
-    """
+    from app.services.cache_service import cache
+
     health_status = {
         "status": "healthy",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "app": settings.APP_NAME,
         "version": settings.APP_VERSION,
-        "environment": settings.ENVIRONMENT,
         "services": {}
     }
 
@@ -31,15 +26,23 @@ def health_check(db: Session = Depends(get_db)):
         db.execute(text("SELECT 1"))
         health_status["services"]["database"] = "✅ connected"
     except Exception as e:
-        health_status["services"]["database"] = f"❌ error: {str(e)}"
+        health_status["services"]["database"] = f"❌ {str(e)[:50]}"
         health_status["status"] = "unhealthy"
 
     # Redis check
-    try:
-        r = redis_client.from_url(settings.REDIS_URL)
-        r.ping()
-        health_status["services"]["redis"] = "✅ connected"
-    except Exception as e:
-        health_status["services"]["redis"] = f"❌ error: {str(e)}"
+    health_status["services"]["redis"] = (
+        "✅ connected" if cache.is_connected else "⚠️ not available"
+    )
+
+    # ML Models
+    from app.services.categoriser_service import categoriser
+    from app.services.anomaly_service import anomaly_detector
+    from app.services.prediction_service import predictor
+
+    health_status["ml_models"] = {
+        "categoriser": "✅ loaded" if categoriser.is_loaded else "❌ not loaded",
+        "anomaly_detector": "✅ loaded" if anomaly_detector.is_loaded else "❌ not loaded",
+        "predictor": "✅ loaded" if predictor.is_loaded else "❌ not loaded",
+    }
 
     return health_status

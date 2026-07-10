@@ -4,6 +4,7 @@ from sqlalchemy import func, desc, asc, or_
 from fastapi import HTTPException, status
 from app.models.transaction import Transaction, TransactionType
 from app.models.category import Category
+from app.services.cache_service import cache
 from app.schemas.transaction import (
     TransactionCreate, TransactionUpdate,
     TransactionFilters, MonthlySummary, CategoryAnalytics
@@ -11,6 +12,7 @@ from app.schemas.transaction import (
 from app.models.user import User
 import uuid
 import csv
+from sqlalchemy import extract
 import io
 from datetime import datetime, timezone
 from typing import List, Tuple
@@ -20,6 +22,8 @@ from app.models.category import Category
 from app.services.anomaly_service import anomaly_detector
 from app.models.alert import Alert, AlertType, AlertSeverity
 import uuid as uuid_lib
+
+from backend.app.schemas import user
 
 class TransactionService:
 
@@ -117,6 +121,8 @@ class TransactionService:
         db.add(transaction)
         db.commit()
         db.refresh(transaction)
+        from app.services.cache_service import cache
+        cache.invalidate_user_cache(str(user.id))
         return transaction
 
     @staticmethod
@@ -355,6 +361,8 @@ class TransactionService:
             "skipped": skipped,
             "errors": errors[:10]  # Max 10 errors show karo
         }
+    
+    
 
     @staticmethod
     def get_monthly_summary(
@@ -363,11 +371,14 @@ class TransactionService:
         month: int,
         year: int
     ) -> MonthlySummary:
-        """
-        Kisi bhi month ka summary nikalo.
-        Income, expenses, savings, top category.
-        """
-        from sqlalchemy import extract
+        """Monthly summary — cached 5 minutes."""
+
+        # Cache check
+        from app.services.cache_service import cache
+        cache_key = f"summary:{user.id}:{month}:{year}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return MonthlySummary(**cached_data)
 
         # Us month ki transactions
         base_query = db.query(Transaction).filter(
@@ -376,22 +387,18 @@ class TransactionService:
             extract('year', Transaction.transaction_date) == year
         )
 
-        # Total income
         income_result = base_query.filter(
             Transaction.transaction_type == TransactionType.CREDIT
         ).with_entities(func.sum(Transaction.amount)).scalar()
         total_income = float(income_result or 0)
 
-        # Total expenses
         expense_result = base_query.filter(
             Transaction.transaction_type == TransactionType.DEBIT
         ).with_entities(func.sum(Transaction.amount)).scalar()
         total_expenses = float(expense_result or 0)
 
-        # Transaction count
         count = base_query.count()
 
-        # Top category dhundho
         top_cat_result = db.query(
             Category.name,
             func.sum(Transaction.amount).label('total')
@@ -407,7 +414,7 @@ class TransactionService:
 
         top_category = top_cat_result[0] if top_cat_result else None
 
-        return MonthlySummary(
+        summary = MonthlySummary(
             month=month,
             year=year,
             total_income=round(total_income, 2),
@@ -417,6 +424,11 @@ class TransactionService:
             top_category=top_category
         )
 
+        # Cache save karo — 5 minutes
+        cache.set(cache_key, summary.model_dump(), ttl_seconds=300)
+
+        return summary
+
     @staticmethod
     def get_category_analytics(
         db: Session,
@@ -424,10 +436,15 @@ class TransactionService:
         month: int = None,
         year: int = None
     ) -> List[CategoryAnalytics]:
-        """
-        Category-wise spending breakdown.
-        Dashboard pie chart ke liye data.
-        """
+        """Category analytics — cached 15 minutes."""
+
+        # Cache check
+        from app.services.cache_service import cache
+        cache_key = f"analytics:{user.id}:{month}:{year}"
+        cached_data = cache.get(cache_key)
+        if cached_data:
+            return [CategoryAnalytics(**item) for item in cached_data]
+
         from sqlalchemy import extract
 
         query = db.query(
@@ -457,7 +474,6 @@ class TransactionService:
             Category.id, Category.name
         ).order_by(desc('total_amount')).all()
 
-        # Total calculate karo percentage ke liye
         grand_total = sum(r.total_amount or 0 for r in results)
 
         analytics = []
@@ -474,5 +490,12 @@ class TransactionService:
                     ),
                     avg_transaction=round(float(r.avg_transaction or 0), 2)
                 ))
+
+        # Cache save karo — 15 minutes
+        cache.set(
+            cache_key,
+            [item.model_dump() for item in analytics],
+            ttl_seconds=900
+        )
 
         return analytics

@@ -8,6 +8,7 @@ from pydantic import BaseModel
 from typing import List
 from app.services.anomaly_service import anomaly_detector
 from datetime import datetime, timezone
+from app.services.prediction_service import predictor
 from app.db.session import get_db
 router = APIRouter()
 
@@ -111,5 +112,53 @@ def get_anomaly_stats(
             "total_anomalies": total,
             "unread_alerts": unread_alerts,
             "detector_loaded": anomaly_detector.is_loaded
+        }
+    )
+
+
+
+@router.get("/forecast")
+def get_spending_forecast(
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Next 30 days ka spending forecast.
+    Dashboard forecast page ke liye.
+    """
+    forecast = predictor.predict_next_month()
+    return SuccessResponse(
+        message="Forecast generated",
+        data=forecast
+    )
+
+@router.get("/forecast/{category}")
+def get_category_forecast(
+    category: str,
+    days: int = 30,
+    current_user: User = Depends(get_current_user)
+):
+    """Single category ka detailed forecast."""
+    result = predictor.predict_category(category, days)
+    return SuccessResponse(data=result)
+
+@router.get("/savings-advice")
+def get_savings_advice(
+    monthly_income: float = 50000,
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Savings advice based on predicted expenses.
+    50-30-20 rule use karta hai.
+    """
+    forecast = predictor.predict_next_month()
+    total_predicted = forecast.get("total_predicted", 0)
+
+    advice = predictor.get_savings_advice(total_predicted, monthly_income)
+
+    return SuccessResponse(
+        message=advice["message"],
+        data={
+            **advice,
+            "forecast": forecast,
         }
     )
