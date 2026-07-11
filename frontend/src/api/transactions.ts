@@ -1,13 +1,20 @@
-// src/api/transactions.ts
+// src/api/transactions.ts — poora replace karo
 import { apiClient } from './client'
 import type {
-  ApiResponse, Transaction, MonthlySummary,
-  TransactionFilters
+  ApiResponse, Transaction,
+  MonthlySummary, TransactionFilters
 } from '../types'
 
 export const transactionsApi = {
   list: async (filters: TransactionFilters = {}) => {
     const res = await apiClient.get('/transactions', { params: filters })
+    return res.data
+  },
+
+  getById: async (id: string) => {
+    const res = await apiClient.get<ApiResponse<Transaction>>(
+      `/transactions/${id}`
+    )
     return res.data
   },
 
@@ -48,9 +55,15 @@ export const transactionsApi = {
   },
 
   getAnalytics: async (month?: number, year?: number) => {
-    const res = await apiClient.get('/transactions/analytics', {
-      params: { month, year }
-    })
+    const res = await apiClient.get(
+      '/transactions/analytics',
+      { params: { month, year } }
+    )
+    return res.data
+  },
+
+  getCategories: async () => {
+    const res = await apiClient.get('/transactions/categories')
     return res.data
   },
 }

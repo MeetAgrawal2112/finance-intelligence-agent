@@ -225,3 +225,31 @@ def delete_transaction(
         db, current_user, str(transaction_id)
     )
     return SuccessResponse(message="Transaction deleted successfully")
+
+
+# transactions.py mein — end mein add karo
+@router.get("/categories")
+def get_categories(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """Sab categories list karo."""
+    from app.models.category import Category
+    categories = db.query(Category).filter(
+        (Category.is_system == True) |
+        (Category.user_id == current_user.id)
+    ).order_by(Category.name).all()
+
+    return SuccessResponse(
+        data={
+            "categories": [
+                {
+                    "id": str(c.id),
+                    "name": c.name,
+                    "icon": c.icon,
+                    "color": c.color,
+                }
+                for c in categories
+            ]
+        }
+    )

@@ -54,6 +54,7 @@ export default function DashboardPage() {
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun',
                       'Jul','Aug','Sep','Oct','Nov','Dec']
 
+                      
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
 
@@ -65,7 +66,9 @@ export default function DashboardPage() {
         justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 100,
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+        
       }}>
+        
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           <div style={{
             width: '36px', height: '36px', background: '#0284c7',
@@ -82,11 +85,12 @@ export default function DashboardPage() {
         <div style={{ display: 'flex', gap: '0.25rem' }}>
           {[
             { icon: <LayoutDashboard size={15} />, label: 'Dashboard', active: true },
-            { icon: <CreditCard size={15} />, label: 'Transactions' },
+            { icon: <CreditCard size={15} />, label: 'Transactions', path: '/transactions' },
             { icon: <Bell size={15} />, label: 'Alerts' },
             { icon: <Bot size={15} />, label: 'AI Chat' },
           ].map(item => (
-            <button key={item.label} style={{
+            <button key={item.label} onClick={() => item.path && navigate(item.path)}
+             style={{
               display: 'flex', alignItems: 'center', gap: '0.375rem',
               padding: '0.5rem 0.75rem', border: 'none', borderRadius: '0.5rem',
               cursor: 'pointer', fontSize: '0.875rem',

@@ -95,3 +95,20 @@ export interface TransactionFilters {
   sort_by?: string
   sort_order?: 'asc' | 'desc'
 }
+
+// src/types/index.ts mein add karo
+
+export interface Category {
+  id: string
+  name: string
+  icon: string
+  color: string
+  is_system: boolean
+}
+
+export interface ImportResult {
+  total_rows: number
+  imported: number
+  skipped: number
+  errors: string[]
+}
