@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
   TrendingUp, Plus, Upload, Search,
-  Filter, X, AlertTriangle, LogOut, LayoutDashboard, Bot
+  X, AlertTriangle, LogOut, LayoutDashboard
 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { toast } from '../store/toastStore'
@@ -14,7 +14,7 @@ import CSVImport from '../components/transactions/CSVImport'
 import type { TransactionFilters } from '../types'
 
 export default function TransactionsPage() {
-  const { user, logout } = useAuthStore()
+  const { logout } = useAuthStore()
   const navigate = useNavigate()
   const deleteMutation = useDeleteTransaction()
 
@@ -27,7 +27,6 @@ export default function TransactionsPage() {
   const [search, setSearch] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
   const [showImport, setShowImport] = useState(false)
-  const [showFilters, setShowFilters] = useState(false)
   const [anomalyOnly, setAnomalyOnly] = useState(false)
   const [typeFilter, setTypeFilter] = useState('')
 
@@ -68,56 +67,6 @@ export default function TransactionsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>
-
-      {/* Navbar */}
-      <nav style={{
-        background: 'white', borderBottom: '1px solid #e2e8f0',
-        padding: '0 1.5rem', height: '64px',
-        display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between',
-        position: 'sticky', top: 0, zIndex: 100,
-        boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <div style={{
-            width: '36px', height: '36px', background: '#0284c7',
-            borderRadius: '0.625rem', display: 'flex',
-            alignItems: 'center', justifyContent: 'center',
-          }}>
-            <TrendingUp size={20} color="white" />
-          </div>
-          <span style={{ fontWeight: 700, color: '#0f172a' }}>
-            Finance Intelligence
-          </span>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.25rem' }}>
-          {[
-            { icon: <LayoutDashboard size={15} />, label: 'Dashboard', path: '/dashboard' },
-            { icon: <TrendingUp size={15} />, label: 'Transactions', path: '/transactions', active: true },
-            { icon: <Bot size={15} />, label: 'AI Chat', path: '/dashboard' },
-          ].map(item => (
-            <button key={item.label}
-              onClick={() => navigate(item.path)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '0.375rem',
-                padding: '0.5rem 0.75rem', border: 'none',
-                borderRadius: '0.5rem', cursor: 'pointer',
-                fontSize: '0.875rem',
-                background: item.active ? '#f0f9ff' : 'none',
-                color: item.active ? '#0284c7' : '#64748b',
-                fontWeight: item.active ? 600 : 400,
-              }}
-            >
-              {item.icon}{item.label}
-            </button>
-          ))}
-        </div>
-
-        <button onClick={handleLogout} className="btn-secondary" style={{ fontSize: '0.875rem' }}>
-          <LogOut size={15} /> Logout
-        </button>
-      </nav>
 
       {/* Content */}
       <div style={{ maxWidth: '1280px', margin: '0 auto', padding: '2rem 1.5rem' }}>

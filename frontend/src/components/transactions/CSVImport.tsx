@@ -1,6 +1,6 @@
 // src/components/transactions/CSVImport.tsx
 import { useState, useRef } from 'react'
-import { Upload, FileText, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { Upload, FileText, CheckCircle, Loader2 } from 'lucide-react'
 import { useImportCSV } from '../../hooks/useTransactions'
 
 export default function CSVImport({ onClose }: { onClose: () => void }) {

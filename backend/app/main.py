@@ -10,6 +10,7 @@ from app.services.prediction_service import predictor  # ← ADD
 from app.api.routes import health, auth, transactions, ml, nlq
 # app/main.py mein lifespan update karo
 from app.services.cache_service import cache
+from app.api.routes import health, auth, transactions, ml, nlq, alerts
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -75,4 +76,10 @@ app.include_router(
     nlq.router,
     prefix="/api/v1/nlq",
     tags=["Natural Language Queries"]
+)
+
+app.include_router(
+    alerts.router,
+    prefix="/api/v1/alerts",
+    tags=["Alerts"]
 )
