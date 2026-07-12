@@ -7,7 +7,6 @@ from app.api.routes import health, auth, transactions
 from app.services.categoriser_service import categoriser
 from app.services.anomaly_service import anomaly_detector
 from app.services.prediction_service import predictor  # ← ADD
-from app.api.routes import health, auth, transactions, ml, nlq
 # app/main.py mein lifespan update karo
 from app.services.cache_service import cache
 from app.api.routes import health, auth, transactions, ml, nlq, alerts
@@ -77,6 +76,8 @@ app.include_router(
     prefix="/api/v1/nlq",
     tags=["Natural Language Queries"]
 )
+
+app.include_router(ml.router, prefix="/api/v1/ml", tags=["ML"])
 
 app.include_router(
     alerts.router,

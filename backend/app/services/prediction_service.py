@@ -51,109 +51,30 @@ class PredictionService:
         self,
         user_transactions: list = None
     ) -> dict:
-        """
-        Next 30 days ka category-wise spending predict karo.
+        """Next 30 days ka category-wise spending predict karo."""
 
-        Args:
-            user_transactions: User ki actual transactions list
-                               (agar available ho toh model retrain hoga)
-
-        Returns:
-            {
-                "predictions": [
-                    {
-                        "category": "Groceries",
-                        "predicted_amount": 4250.0,
-                        "lower_bound": 3800.0,
-                        "upper_bound": 4700.0,
-                        "trend": "increasing",
-                        "confidence": 0.8
-                    },
-                    ...
-                ],
-                "total_predicted": 21830.0,
-                "forecast_period": "2025-02-01 to 2025-03-02",
-                "savings_potential": 2500.0
-            }
-        """
         if not self._model_data:
             return self._fallback_prediction()
 
-        models = self._model_data["models"]
-        categories = self._model_data["categories"]
+        # ← FIX: "forecaster" key use karo, "models" nahi
+        forecaster = self._model_data.get("forecaster")
 
-        predictions = []
-        total = 0.0
+        if not forecaster:
+            return self._fallback_prediction()
+
+        predictions = forecaster.predict_all()
+        total = sum(p["predicted_amount"] for p in predictions)
+        top_3_total = sum(p["predicted_amount"] for p in predictions[:3])
+        savings_potential = round(top_3_total * 0.20, 2)
 
         today = datetime.now(timezone.utc)
-        start_date = today + timedelta(days=1)
-        end_date = today + timedelta(days=30)
-
-        for cat in categories:
-            if cat not in models:
-                continue
-
-            model = models[cat]
-
-            try:
-                # Future dataframe banao
-                future = model.make_future_dataframe(periods=30)
-                forecast = model.predict(future)
-
-                # Sirf next 30 days
-                next_30 = forecast.tail(30)
-
-                predicted = max(0, float(next_30['yhat'].sum()))
-                lower = max(0, float(next_30['yhat_lower'].sum()))
-                upper = max(0, float(next_30['yhat_upper'].sum()))
-
-                # Trend detect karo
-                if len(forecast) > 60:
-                    recent = forecast.tail(60)
-                    first_half = recent.head(30)['yhat'].mean()
-                    second_half = recent.tail(30)['yhat'].mean()
-
-                    if second_half > first_half * 1.05:
-                        trend = "increasing"
-                    elif second_half < first_half * 0.95:
-                        trend = "decreasing"
-                    else:
-                        trend = "stable"
-                else:
-                    trend = "stable"
-
-                total += predicted
-
-                predictions.append({
-                    "category": cat,
-                    "predicted_amount": round(predicted, 2),
-                    "lower_bound": round(lower, 2),
-                    "upper_bound": round(upper, 2),
-                    "trend": trend,
-                    "confidence": 0.8,
-                    "daily_average": round(predicted / 30, 2),
-                })
-
-            except Exception as e:
-                print(f"   Prediction error for {cat}: {e}")
-                continue
-
-        # Sort by amount (highest first)
-        predictions.sort(key=lambda x: x["predicted_amount"], reverse=True)
-
-        # Savings potential calculate karo
-        # Agar top 3 categories mein 20% cut karo
-        top_3_total = sum(
-            p["predicted_amount"] for p in predictions[:3]
-        )
-        savings_potential = round(top_3_total * 0.20, 2)
 
         return {
             "predictions": predictions,
             "total_predicted": round(total, 2),
             "forecast_period": {
-                "start": start_date.strftime("%Y-%m-%d"),
-                "end": end_date.strftime("%Y-%m-%d"),
+                "start": (today + timedelta(days=1)).strftime("%Y-%m-%d"),
+                "end": (today + timedelta(days=30)).strftime("%Y-%m-%d"),
             },
             "savings_potential": savings_potential,
             "top_spending_category": (

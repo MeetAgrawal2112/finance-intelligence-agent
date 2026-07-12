@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.db.session import get_db
 from app.core.security import decode_token, verify_token_type, TokenType
 from app.models.user import User
+from uuid import UUID as PyUUID
 
 bearer_scheme = HTTPBearer(
     scheme_name="JWT Bearer Token",
@@ -50,7 +51,12 @@ def get_current_user(
     if not user_id:
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == user_id).first()
+    try:
+        user_uuid = PyUUID(user_id)
+    except ValueError:
+        raise credentials_exception
+
+    user = db.query(User).filter(User.id == user_uuid).first()
 
     if not user:
         raise credentials_exception
@@ -58,7 +64,7 @@ def get_current_user(
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Your account has been disabled. Contact support."
+            detail="Account disabled"
         )
 
     return user
