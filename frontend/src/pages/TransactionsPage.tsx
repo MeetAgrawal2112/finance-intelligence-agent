@@ -1,11 +1,10 @@
 // src/pages/TransactionsPage.tsx
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import {
-  TrendingUp, Plus, Upload, Search,
-  X, AlertTriangle, LogOut, LayoutDashboard
+// import { useNavigate } from 'react-router-dom'
+import { Plus, Upload, Search,
+  X, AlertTriangle
 } from 'lucide-react'
-import { useAuthStore } from '../store/authStore'
+// import { useAuthStore } from '../store/authStore'
 import { toast } from '../store/toastStore'
 import { useTransactions, useDeleteTransaction } from '../hooks/useTransactions'
 import TransactionTable from '../components/transactions/TransactionTable'
@@ -14,8 +13,6 @@ import CSVImport from '../components/transactions/CSVImport'
 import type { TransactionFilters } from '../types'
 
 export default function TransactionsPage() {
-  const { logout } = useAuthStore()
-  const navigate = useNavigate()
   const deleteMutation = useDeleteTransaction()
 
   const [filters, setFilters] = useState<TransactionFilters>({
@@ -49,11 +46,6 @@ export default function TransactionsPage() {
     } catch (err) {
       toast.error('Delete failed', 'Try again.')
     }
-  }
-
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
   }
 
   const clearFilters = () => {

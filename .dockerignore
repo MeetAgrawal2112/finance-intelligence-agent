@@ -1,0 +1,32 @@
+# Python
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/.venv
+**/venv
+**/.pytest_cache
+**/htmlcov
+**/.coverage
+
+# Node
+**/node_modules
+**/dist
+**/.next
+
+# Git
+.git
+.gitignore
+
+# Environment
+**/.env
+**/.env.local
+
+# IDE
+.vscode
+.idea
+
+# Logs
+**/*.log
+
+# Tests
+**/tests/

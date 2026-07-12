@@ -1,16 +1,14 @@
 // src/pages/ForecastPage.tsx
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+// import { useNavigate } from 'react-router-dom'
 import {
   TrendingUp, TrendingDown, Minus,
-  LogOut, LayoutDashboard, CreditCard,
-  Bell
 } from 'lucide-react'
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid,
   Tooltip, ResponsiveContainer, Cell
 } from 'recharts'
-import { useAuthStore } from '../store/authStore'
+// import { useAuthStore } from '../store/authStore'
 import { useSpendingForecast } from '../hooks/useDashboard'
 import { apiClient } from '../api/client'
 import { useQuery } from '@tanstack/react-query'
@@ -33,8 +31,6 @@ function useSavingsAdvice(income: number) {
 }
 
 export default function ForecastPage() {
-  const { logout } = useAuthStore()
-  const navigate = useNavigate()
   const [income, setIncome] = useState(75000)
   const [inputIncome, setInputIncome] = useState('75000')
 
@@ -45,10 +41,6 @@ export default function ForecastPage() {
   const predictions = forecast?.predictions || []
   const advice = adviceData?.data
 
-  const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
 
   const STATUS_CONFIG = {
     excellent: { color: '#16a34a', bg: '#f0fdf4', emoji: '🎉' },
@@ -63,12 +55,6 @@ export default function ForecastPage() {
     return <Minus size={14} color="#64748b" />
   }
 
-  const navItems = [
-    { icon: <LayoutDashboard size={15} />, label: 'Dashboard', path: '/dashboard' },
-    { icon: <CreditCard size={15} />, label: 'Transactions', path: '/transactions' },
-    { icon: <Bell size={15} />, label: 'Alerts', path: '/alerts' },
-    { icon: <TrendingUp size={15} />, label: 'Forecast', path: '/forecast', active: true },
-  ]
 
   return (
     <div style={{ minHeight: '100vh', background: '#f8fafc' }}>

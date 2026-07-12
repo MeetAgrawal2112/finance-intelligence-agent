@@ -1,15 +1,11 @@
 // src/pages/DashboardPage.tsx — poora replace karo
 import { useState } from 'react'
-import {
-  TrendingUp, LogOut, LayoutDashboard,
-  CreditCard, Bell, Bot, User, ChevronLeft, ChevronRight,
-  AlertTriangle
+import { ChevronLeft, ChevronRight,AlertTriangle
 } from 'lucide-react'
 import { useUnreadCount } from '../hooks/useAlerts'
-
 import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { toast } from '../store/toastStore'
+// import { toast } from '../store/toastStore'
 import { useMonthlySummary, useCategoryAnalytics } from '../hooks/useDashboard'
 import { useTransactions } from '../hooks/useTransactions'
 import SummaryCards from '../components/dashboard/SummaryCards'
@@ -18,7 +14,7 @@ import RecentTransactions from '../components/dashboard/RecentTransactions'
 import AIChat from '../components/dashboard/AIChat'
 
 export default function DashboardPage() {
-  const { user, logout } = useAuthStore()
+  const { user } = useAuthStore()
   const navigate = useNavigate()
   const unreadAlerts = useUnreadCount()
   const now = new Date()
@@ -38,11 +34,6 @@ export default function DashboardPage() {
   const categories = analyticsData?.data?.categories || []
   const transactions = txnData?.data?.items || []
 
-  const handleLogout = async () => {
-    await logout()
-    toast.info('Logged out', 'Phir milenge! 👋')
-    navigate('/login')
-  }
 
   const prevMonth = () => {
     if (month === 1) { setMonth(12); setYear(y => y - 1) }

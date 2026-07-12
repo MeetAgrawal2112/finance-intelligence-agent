@@ -1,0 +1,43 @@
+# docker/Dockerfile.backend
+FROM python:3.11-slim
+
+# System dependencies
+RUN apt-get update && apt-get install -y \
+    gcc \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+# Working directory
+WORKDIR /app
+
+# Python dependencies pehle install karo
+# (Code se alag layer — cache optimization)
+COPY backend/requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# ML models copy karo
+COPY ml/models/ /app/ml/models/
+COPY ml/forecaster.py /app/ml/forecaster.py
+COPY ml/text_utils.py /app/ml/text_utils.py
+
+# Application code
+COPY backend/ .
+
+# Non-root user — security ke liye
+RUN adduser --disabled-password --gecos "" appuser
+RUN chown -R appuser:appuser /app
+USER appuser
+
+# Port expose karo
+EXPOSE 8000
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD python -c "import httpx; httpx.get('http://localhost:8000/health')" \
+    || exit 1
+
+# Start command
+CMD ["uvicorn", "app.main:app", \
+     "--host", "0.0.0.0", \
+     "--port", "8000", \
+     "--workers", "2"]
