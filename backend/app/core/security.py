@@ -1,4 +1,3 @@
-# app/core/security.py — poora file replace karo
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 from jose import JWTError, jwt

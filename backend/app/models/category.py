@@ -11,16 +11,12 @@ class Category(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    name = Column(String(100), nullable=False)        # "Groceries", "Dining"
-    icon = Column(String(50))                         # Emoji ya icon name: "🛒", "🍕"
-    color = Column(String(7))                         # Hex color: "#FF6B6B"
+    name = Column(String(100), nullable=False)
+    icon = Column(String(50))
+    color = Column(String(7))
 
-    # is_system = True matlab ye default categories hain jo hum seed karenge
-    # is_system = False matlab user ne khud banaya
     is_system = Column(Boolean, default=False)
 
-    # NULL user_id = system-wide category (sab use kar sakte hain)
-    # UUID user_id = us specific user ki custom category
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=True)
 
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))

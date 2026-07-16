@@ -1,4 +1,3 @@
-# app/models/budget.py
 from sqlalchemy import Column, Float, Integer, DateTime, ForeignKey, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -14,14 +13,12 @@ class Budget(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     category_id = Column(UUID(as_uuid=True), ForeignKey("categories.id", ondelete="CASCADE"), nullable=False)
 
-    amount = Column(Float, nullable=False)       # Budget limit — ₹5000
-    spent_amount = Column(Float, default=0.0)    # Abhi tak kitna kharch hua
+    amount = Column(Float, nullable=False)
+    spent_amount = Column(Float, default=0.0)
 
-    # Month aur year — January 2025 ka budget alag, February ka alag
-    month = Column(Integer, nullable=False)       # 1-12
-    year = Column(Integer, nullable=False)        # 2025
+    month = Column(Integer, nullable=False)
+    year = Column(Integer, nullable=False)
 
-    # Alert threshold — 80% budget use hone pe warning
     alert_threshold = Column(Float, default=0.8)
     is_alert_sent = Column(Boolean, default=False)
 
@@ -30,9 +27,8 @@ class Budget(Base):
                         default=lambda: datetime.now(timezone.utc),
                         onupdate=lambda: datetime.now(timezone.utc))
 
-    # Relationships
     user = relationship("User", back_populates="budgets")
-    category = relationship("Category", back_populates="budgets")
+    category = relationship("Category", back_populates="budgets"
 
     def __repr__(self):
         return f"<Budget ₹{self.amount} for {self.category_id} - {self.month}/{self.year}>"

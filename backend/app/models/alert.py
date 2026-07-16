@@ -1,4 +1,3 @@
-# app/models/alert.py
 from sqlalchemy import Column, String, Boolean, DateTime, ForeignKey, Enum, Text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
@@ -26,7 +25,6 @@ class Alert(Base):
 
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
-    # Agar alert kisi specific transaction ke baare mein hai
     transaction_id = Column(UUID(as_uuid=True), ForeignKey("transactions.id", ondelete="SET NULL"), nullable=True)
 
     alert_type = Column(Enum(AlertType), nullable=False)

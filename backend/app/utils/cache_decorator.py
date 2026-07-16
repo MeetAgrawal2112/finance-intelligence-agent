@@ -28,20 +28,17 @@ def cached(ttl: int = 300, key_prefix: str = "cache"):
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
-            # Cache key banao — function args se
             key_parts = [key_prefix] + [str(a) for a in args] + \
                        [f"{k}:{v}" for k, v in sorted(kwargs.items())]
             cache_key = ":".join(key_parts)
 
-            # Cache check karo
+
             cached_value = cache.get(cache_key)
             if cached_value is not None:
                 return cached_value
 
-            # Cache miss — function call karo
             result = func(*args, **kwargs)
 
-            # Result cache karo
             if result is not None:
                 cache.set(cache_key, result, ttl)
 

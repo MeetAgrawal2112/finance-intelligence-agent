@@ -1,4 +1,3 @@
-# app/api/routes/nlq.py
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session

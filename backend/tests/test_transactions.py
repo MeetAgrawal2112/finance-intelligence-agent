@@ -314,7 +314,6 @@ class TestTransactionCRUD:
         )
         txn_id = create_r.json()["data"]["id"]
 
-        # User 2 banao aur login karo
         user2 = User(
             id=uuid.uuid4(),
             email="user2@example.com",

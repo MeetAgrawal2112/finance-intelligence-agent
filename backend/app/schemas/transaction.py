@@ -1,4 +1,3 @@
-# app/schemas/transaction.py
 from pydantic import BaseModel, Field, field_validator
 from typing import Optional, List
 from uuid import UUID

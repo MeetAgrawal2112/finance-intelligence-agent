@@ -1,4 +1,3 @@
-# app/api/routes/health.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import text

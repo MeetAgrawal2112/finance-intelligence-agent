@@ -1,9 +1,3 @@
-# ml/anomaly_detector.py
-"""
-Anomaly Detection Model.
-Run: python ml/anomaly_detector.py
-"""
-
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
@@ -15,22 +9,9 @@ from sklearn.preprocessing import StandardScaler
 from datetime import datetime, timezone
 from collections import defaultdict
 
-# ─── Sample Training Data ─────────────────────────────────────────────────────
-
 def generate_normal_transactions(n=500):
-    """
-    Normal transaction patterns generate karo training ke liye.
-    Real app mein user ka actual history use hoga.
-    """
     np.random.seed(42)
     transactions = []
-
-    # Normal patterns:
-    # - Groceries: ₹200-₹3000, weekly
-    # - Dining: ₹100-₹2000, daily
-    # - Transport: ₹50-₹500, daily
-    # - Rent: ₹10000-₹30000, monthly
-    # - Salary: ₹30000-₹150000, monthly
 
     categories = {
         'Groceries':     {'mean': 1500,  'std': 500,   'freq': 7},
@@ -61,21 +42,7 @@ def generate_normal_transactions(n=500):
 
     return transactions
 
-# ─── Feature Engineering ──────────────────────────────────────────────────────
-
 def extract_features(transactions: list) -> np.ndarray:
-    """
-    Transaction se numeric features nikalo.
-    Model sirf numbers samajhta hai — text nahi.
-
-    Features:
-    1. amount — transaction ka amount
-    2. log_amount — log scale (outliers handle karna)
-    3. hour — din ka kaunsa waqt
-    4. day_of_week — weekday vs weekend
-    5. is_weekend — 0 ya 1
-    6. is_night — raat ka transaction (11pm-5am)
-    """
     features = []
     for t in transactions:
         amount = t['amount']
@@ -104,12 +71,10 @@ print("\n📊 Generating training data...")
 normal_txns = generate_normal_transactions(500)
 print(f"   Normal transactions: {len(normal_txns)}")
 
-# Features extract karo
 X = extract_features(normal_txns)
 print(f"   Features per transaction: {X.shape[1]}")
 print(f"   Feature names: amount, log_amount, hour, day_of_week, is_weekend, is_night")
 
-# Scale karo
 scaler = StandardScaler()
 X_scaled = scaler.fit_transform(X)
 
@@ -168,7 +133,7 @@ for tc in test_cases:
 
     print(f"   {match} {status} | Score: {anomaly_score:.2f} | {tc['desc']}")
 
-# ─── Save Model ───────────────────────────────────────────────────────────────
+
 
 os.makedirs("ml/models", exist_ok=True)
 

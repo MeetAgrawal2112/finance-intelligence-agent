@@ -1,12 +1,6 @@
-// src/utils/errorHandler.ts
 import { toast } from '../store/toastStore'
 
-/**
- * API errors ko handle karo aur user-friendly
- * toast messages dikhao.
- */
 export function handleApiError(error: any, fallback = 'Kuch gadbad ho gayi'): string {
-  // Network error — backend chal nahi raha
   if (!error.response) {
     const msg = 'Server se connect nahi ho pa raha. Backend chal raha hai?'
     toast.error('Connection Error', msg)

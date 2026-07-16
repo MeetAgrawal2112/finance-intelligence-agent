@@ -1,4 +1,3 @@
-# app/services/anomaly_service.py
 import joblib
 import numpy as np
 import os
@@ -6,18 +5,9 @@ from datetime import datetime, timezone
 from typing import Optional
 
 class AnomalyService:
-    """
-    Singleton — model ek baar load, baar baar use.
-    3-layer detection:
-    1. Isolation Forest (ML-based)
-    2. Z-Score (statistical)
-    3. Rule-based (business logic)
-    """
     _instance = None
     _model_data = None
 
-    # User ke historical stats (in-memory cache)
-    # Production mein Redis ya DB mein store hoga
     _user_stats: dict = {}
 
     def __new__(cls):
@@ -47,7 +37,6 @@ class AnomalyService:
 
     def _extract_features(self, amount: float,
                           transaction_date: datetime) -> np.ndarray:
-        """Transaction se features nikalo."""
         hour = transaction_date.hour
         dow = transaction_date.weekday()
 
@@ -61,7 +50,6 @@ class AnomalyService:
         ]])
 
     def _isolation_forest_score(self, features: np.ndarray) -> float:
-        """Isolation Forest se anomaly score."""
         if not self._model_data:
             return 0.0
 
@@ -71,13 +59,10 @@ class AnomalyService:
         scaled = scaler.transform(features)
         raw_score = iso_forest.score_samples(scaled)[0]
 
-        # Normalize to 0-1
         return float(max(0, min(1, (-raw_score - 0.3) / 0.7)))
 
     def _zscore_score(self, amount: float,
                       user_id: str, category: str) -> float:
-        """
-        Z-Score: kitna standard deviations average se door hai?
         |z| > 2 → suspicious
         |z| > 3 → very suspicious
         """
@@ -178,7 +163,7 @@ class AnomalyService:
         # Features extract karo
         features = self._extract_features(amount, transaction_date)
 
-        # 3 scores calculate karo
+
         if_score = self._isolation_forest_score(features)
         z_score = self._zscore_score(amount, user_id, category)
         rule_score, reasons = self._rule_based_score(

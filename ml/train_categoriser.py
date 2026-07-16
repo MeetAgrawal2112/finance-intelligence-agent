@@ -1,4 +1,3 @@
-# ml/train_categoriser.py
 """
 Expense Categorisation Model Training Script.
 
@@ -25,13 +24,10 @@ import re
 from ml.data.transactions_dataset import TRAINING_DATA, CATEGORIES
 from ml.text_utils import clean_text
 
-# ─── Prepare Data ─────────────────────────────────────────────────────────────
-
 print("=" * 60)
 print("  EXPENSE CATEGORISATION MODEL TRAINING")
 print("=" * 60)
 
-# Data split karo
 descriptions = [clean_text(desc) for desc, _ in TRAINING_DATA]
 labels = [label for _, label in TRAINING_DATA]
 
@@ -45,39 +41,22 @@ for cat, count in sorted(counts.items(), key=lambda x: -x[1]):
     bar = "█" * count
     print(f"   {cat:<20} {count:3d} {bar}")
 
-# Train/test split — 80% train, 20% test
 X_train, X_test, y_train, y_test = train_test_split(
     descriptions, labels,
     test_size=0.2,
     random_state=42,
-    stratify=labels  # Har category same proportion mein ho
+    stratify=labels
 )
 
 print(f"\n   Training samples: {len(X_train)}")
 print(f"   Testing samples:  {len(X_test)}")
 
-# ─── Model Pipeline ───────────────────────────────────────────────────────────
 
-"""
-Pipeline kya karta hai:
-Step 1: TfidfVectorizer
-  - Text → numeric matrix
-  - ngram_range=(1,2): single words + word pairs
-    "Zomato" aur "Zomato food" dono features bante hain
-  - max_features=5000: top 5000 important features rakh
-  - sublinear_tf=True: frequency ko log scale pe rakh
-    (1 baar vs 10 baar ka difference smooth karta hai)
-
-Step 2: LogisticRegression
-  - Multi-class classification
-  - C=10: regularization — overfitting rok
-  - max_iter=1000: convergence ke liye
-"""
 
 model = Pipeline([
     ('tfidf', TfidfVectorizer(
-        ngram_range=(1, 3),       # trigrams bhi add karo
-        max_features=10000,        # zyada features
+        ngram_range=(1, 3),
+        max_features=10000,
         sublinear_tf=True,
         min_df=1,
         analyzer='word',
@@ -85,22 +64,19 @@ model = Pipeline([
         strip_accents='unicode',
     )),
     ('clf', LogisticRegression(
-        C=50,                      # zyada flexibility
+        C=50,
         max_iter=2000,
         random_state=42,
         solver='lbfgs',
-        class_weight='balanced'    # imbalanced classes handle karo
+        class_weight='balanced'
     ))
 ])
 
-
-# ─── Training ─────────────────────────────────────────────────────────────────
 
 print("\n🏋️  Training model...")
 model.fit(X_train, y_train)
 print("   Training complete!")
 
-# ─── Evaluation ───────────────────────────────────────────────────────────────
 
 print("\n📈 Model Evaluation:")
 
@@ -115,7 +91,6 @@ cv_scores = cross_val_score(model, descriptions, labels, cv=5, scoring='accuracy
 print(f"   Scores: {[f'{s:.1%}' for s in cv_scores]}")
 print(f"   Mean:   {cv_scores.mean():.1%} ± {cv_scores.std():.1%}")
 
-# Detailed report
 print("\n   Classification Report:")
 print(classification_report(y_test, y_pred, target_names=sorted(set(labels))))
 
@@ -153,17 +128,15 @@ for desc in test_cases:
     probabilities = model.predict_proba([cleaned])[0]
     confidence = max(probabilities)
 
-    # Confidence ke hisaab se emoji
+
     emoji = "✅" if confidence > 0.8 else "⚠️" if confidence > 0.5 else "❓"
 
     print(f"   {emoji} \"{desc}\"")
     print(f"      → {prediction} ({confidence:.0%} confident)")
 
-# ─── Save Model ───────────────────────────────────────────────────────────────
 
 os.makedirs("ml/models", exist_ok=True)
 
-# Model + metadata save karo
 model_data = {
     "model": model,
     "categories": CATEGORIES,

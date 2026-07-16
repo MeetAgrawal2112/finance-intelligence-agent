@@ -1,6 +1,7 @@
-# app/schemas/user.py — poora file replace karo
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
+from pydantic import field_validator
+import re
 from uuid import UUID
 from datetime import datetime
 
@@ -10,6 +11,35 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=8, max_length=100)
     currency: str = Field(default="INR", max_length=10)
 
+    @field_validator('password')
+    @classmethod
+    def password_strength(cls, v):
+        """
+        Strong password enforce karo:
+        - Min 8 characters
+        - At least 1 uppercase
+        - At least 1 lowercase
+        - At least 1 digit
+        """
+        if len(v) < 8:
+            raise ValueError('Password minimum 8 characters hona chahiye')
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password mein kam se kam 1 uppercase letter chahiye')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password mein kam se kam 1 lowercase letter chahiye')
+        if not re.search(r'\d', v):
+            raise ValueError('Password mein kam se kam 1 number chahiye')
+        return v
+
+    @field_validator('full_name')
+    @classmethod
+    def name_no_special_chars(cls, v):
+        from app.core.validators import check_xss
+        if check_xss(v):
+            raise ValueError('Invalid characters in name')
+        return v.strip()
+    
+    
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
@@ -34,11 +64,10 @@ class TokenResponse(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
-    expires_in: int  # seconds mein
+    expires_in: int
     user: UserResponse
 
 class RefreshTokenRequest(BaseModel):
-    """Refresh token se naya access token lene ke liye."""
     refresh_token: str
 
 class UserUpdate(BaseModel):
@@ -46,6 +75,5 @@ class UserUpdate(BaseModel):
     currency: Optional[str] = Field(None, max_length=10)
 
 class PasswordChange(BaseModel):
-    """Password change karne ke liye."""
     current_password: str
     new_password: str = Field(..., min_length=8, max_length=100)

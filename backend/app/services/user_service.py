@@ -1,4 +1,3 @@
-# app/services/user_service.py — poora replace karo
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status
 from app.models.user import User

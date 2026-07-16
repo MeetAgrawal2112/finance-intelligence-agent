@@ -1,4 +1,3 @@
-// src/components/dashboard/AIChat.tsx
 import { useState, useRef, useEffect } from 'react'
 import { Send, Bot, User, Loader2, Trash2 } from 'lucide-react'
 import { useNLQ } from '../../hooks/useNLQ'

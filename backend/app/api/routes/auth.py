@@ -1,4 +1,3 @@
-# app/api/routes/auth.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from app.db.session import get_db
@@ -7,6 +6,10 @@ from app.schemas.user import (
     TokenResponse, RefreshTokenRequest,
     UserUpdate, PasswordChange
 )
+from fastapi import APIRouter, Depends, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
+from app.core.rate_limiter import limiter
 from app.schemas.common import SuccessResponse
 from app.services.user_service import UserService
 from app.core.security import (
@@ -37,6 +40,7 @@ def _create_token_response(user: User) -> TokenResponse:
 
 @router.post("/register", response_model=SuccessResponse[UserResponse],
              status_code=status.HTTP_201_CREATED)
+@limiter.limit("5/minute")
 def register(user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Naya account banao.
@@ -49,6 +53,7 @@ def register(user_data: UserCreate, db: Session = Depends(get_db)):
     )
 
 @router.post("/login", response_model=SuccessResponse[TokenResponse])
+@limiter.limit("10/minute")
 def login(credentials: UserLogin, db: Session = Depends(get_db)):
     """
     Login karo — access token aur refresh token dono milenge.
@@ -66,6 +71,7 @@ def login(credentials: UserLogin, db: Session = Depends(get_db)):
     )
 
 @router.post("/refresh", response_model=SuccessResponse[TokenResponse])
+@limiter.limit("20/minute")
 def refresh_token(
     request: RefreshTokenRequest,
     db: Session = Depends(get_db)

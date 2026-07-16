@@ -9,16 +9,11 @@ from app.db.base import Base
 class User(Base):
     __tablename__ = "users"
 
-    # Primary key — UUID use kar rahe hain integer ki jagah
-    # Kyun? UUID globally unique hota hai, integer predictable hota hai
-    # (koi /users/1, /users/2 guess kar sakta hai)
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     email = Column(String(255), unique=True, nullable=False, index=True)
     full_name = Column(String(255), nullable=False)
 
-    # Password plain text kabhi store mat karo!
-    # Hum bcrypt hash store karenge (Day 4 mein)
     hashed_password = Column(String(255), nullable=False)
 
     is_active = Column(Boolean, default=True)

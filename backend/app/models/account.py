@@ -20,7 +20,6 @@ class Account(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    # Foreign key — kiska account hai
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
 
     account_name = Column(String(255), nullable=False)   # "HDFC Savings", "SBI Credit Card"

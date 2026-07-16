@@ -1,4 +1,3 @@
-// src/pages/LoginPage.tsx — poora replace karo
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
@@ -22,7 +21,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState('')
 
-  // Register page se aaye? Success message dikhao
   const justRegistered = new URLSearchParams(location.search).get('registered')
 
   const {

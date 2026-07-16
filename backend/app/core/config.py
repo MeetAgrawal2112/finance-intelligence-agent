@@ -20,7 +20,6 @@ class Settings(BaseSettings):
     # Database
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/finance_db"
 
-        # Settings class mein yeh add karo
     OPENAI_API_KEY: Optional[str] = None
     GROQ_API_KEY: Optional[str] = None
 
